@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-2">
     <!-- Field Label -->
-    <label v-if="field.label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+    <div v-if="field.label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
       {{ field.label }}
       <span v-if="field.required" class="text-red-500">*</span>
-    </label>
+    </div>
 
     <!-- Text Input Types -->
     <UInput
@@ -12,10 +12,9 @@
       v-model="localValue"
       :type="field.type"
       :placeholder="field.placeholder"
-      :min="field.min"
-      :max="field.max"
       :icon="field.icon"
-      :error="errorMessage"
+      class="w-full"
+      
     />
 
     <!-- Select -->
@@ -24,10 +23,10 @@
       v-model="localValue"
       :options="fieldOptions"
       :placeholder="field.placeholder"
-      option-attribute="label"
-      value-attribute="value"
+      
       :icon="field.icon"
-      :error="errorMessage"
+      class="w-full"
+      
     />
 
     <!-- Textarea -->
@@ -36,16 +35,26 @@
       v-model="localValue"
       :placeholder="field.placeholder"
       :rows="field.rows || 4"
-      :error="errorMessage"
+    
     />
 
-    <!-- Checkbox -->
+    <!-- Single Checkbox (no options) -->
     <UCheckbox
-      v-else-if="field.type === 'checkbox'"
+      v-else-if="field.type === 'checkbox' && !field.options"
       v-model="localValue"
       :label="field.checkboxLabel || field.label"
-      :error="errorMessage"
     />
+
+    <!-- Multiple Checkboxes (with options) -->
+    <div v-else-if="field.type === 'checkbox' && field.options" class="space-y-2">
+      <UCheckbox
+        v-for="option in fieldOptions"
+        :key="option.value || option"
+        :model-value="isCheckboxSelected(option.value || option)"
+        @update:model-value="toggleCheckbox(option.value || option, $event)"
+        :label="option.label || option"
+      />
+    </div>
 
     <!-- Radio -->
     <div v-else-if="field.type === 'radio'" class="flex gap-4">
@@ -71,7 +80,7 @@
       v-else-if="field.type === 'date'"
       v-model="localValue"
       type="date"
-      :error="errorMessage"
+      
     />
 
     <!-- Nested Fields (Recursive) -->
@@ -88,7 +97,7 @@
           :key="subField.id"
           :field="subField"
           v-model="nestedValues[subField.id]"
-          :error="nestedError(subField.id)"
+          
           @update:model-value="updateNestedValue(subField.id, $event)"
         />
       </div>
@@ -101,7 +110,7 @@
 <script setup>
 const props = defineProps({
   field: { type: Object, required: true },
-  modelValue: { type: [String, Number, Boolean, Object], default: '' },
+  modelValue: { type: [String, Number, Boolean, Object, Array], default: '' },
   error: { type: [String, Object], default: null }
 })
 
@@ -132,7 +141,46 @@ const fieldOptions = computed(() =>
   )
 )
 
+/* ------------------ Multiple Checkbox Helpers ------------------ */
+// Check if a checkbox option is selected (for multiple checkboxes)
+const isCheckboxSelected = (value) => {
+  if (!Array.isArray(localValue.value)) return false
+  return localValue.value.includes(value)
+}
 
-  typeof props.error === 'object' ? props.error?.[id] || null : null
+// Toggle checkbox value in array (for multiple checkboxes)
+const toggleCheckbox = (value, checked) => {
+  const currentValue = Array.isArray(localValue.value) ? [...localValue.value] : []
+  
+  if (checked) {
+    // Add value if not already present
+    if (!currentValue.includes(value)) {
+      currentValue.push(value)
+      emit('update:modelValue', currentValue)
+    }
+  } else {
+    // Remove value if present
+    const index = currentValue.indexOf(value)
+    if (index > -1) {
+      currentValue.splice(index, 1)
+      emit('update:modelValue', currentValue)
+    }
+  }
+}
+
+/* ------------------ Nested Fields Support ------------------ */
+const nestedValues = ref({})
+
+const updateNestedValue = (id, value) => {
+  nestedValues.value[id] = value
+  emit('update:modelValue', { ...nestedValues.value })
+}
+
+/* ------------------ Error Message ------------------ */
+const errorMessage = computed(() => {
+  if (!props.error) return null
+  if (typeof props.error === 'string') return props.error
+  return props.error?.[props.field.id] || null
+})
 </script>
 

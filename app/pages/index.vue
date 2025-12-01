@@ -254,12 +254,26 @@ const handleSignIn = () => {
   isModalOpen.value = true;
 };
 
-const handleContinue = (roleTitle) => {
+const handleContinue = async (roleTitle) => {
   console.log("Continue with role:", roleTitle);
   
-  navigateTo({
-    path: '/dashboard',
-    query: { roleTitle }
-  });
+  // Close the modal first
+  isModalOpen.value = false;
+  
+  // Wait a bit for modal to close smoothly
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  // Get router instance
+  const router = useRouter();
+  
+  
+    console.log('Attempting navigation to /dashboard...');
+    
+    // Try navigateTo first (Nuxt 3 recommended)
+    router.push('/dashboard');
+    
+    
+  
+  
 };
 </script>

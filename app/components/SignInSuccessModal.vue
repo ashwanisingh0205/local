@@ -1,7 +1,11 @@
 <template>
-  <UModal v-model:open="isOpen" :ui="{ width: 'max-w-4xl', bg: 'bg-white dark:bg-gray-800', rounded: 'rounded-xl' }">
+  <UModal 
+    v-model:open="isOpen" 
+    :ui="{ width: 'max-w-4xl', bg: 'bg-white dark:bg-gray-800', rounded: 'rounded-xl' }"
+    description="Choose the role that matches your position to access the appropriate dashboard and features."
+  >
     <template #body>
-      <div class="space-y-6  ">
+      <div class="space-y-6">
         <!-- Header -->
         <header>
           <p class="text-sm text-black dark:text-gray-200">

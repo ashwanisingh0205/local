@@ -1,3 +1,4 @@
+import { checkbox } from "#build/ui"
 
 
 export const useFormData = () => {
@@ -47,7 +48,7 @@ export const useFormData = () => {
             id: "hasAllergies",
             label: "Has Allergies",  // Title comes from API
             type: "checkbox",
-            checkboxLabel: "Patient has known allergies"
+            options: ["Yes", "No"]
           },
           {
             id: "bloodType",
