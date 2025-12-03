@@ -123,7 +123,8 @@
                 <div class="p-3 pt-2 border-t border-gray-200 dark:border-gray-800 mt-auto">
                     <UButton
                         @click="navigateTo('/upgrade')"
-                        variant="outline"
+                        variant="subtle"
+                        color="neutral"
                         class="w-full justify-center gap-2  "
                         icon="lucide:sparkles"
                         label="Upgrade"
@@ -176,9 +177,102 @@
                         </span>
                     </UButton>
 
+                    <!-- User Profile Avatar -->
+                    <div ref="userMenuRef" class="relative">
+                        <UButton
+                            variant="primary"
+                            size="sm"
+                            class="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-500 dark:hover:ring-blue-400 transition-all border-2 border-emerald-500 dark:border-emerald-400"
+                            :class="isUserMenuOpen ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''"
+                            @click="isUserMenuOpen = !isUserMenuOpen"
+                        >
+                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white font-semibold text-xs sm:text-sm">
+                                <span v-if="!userAvatar">{{ userInitials }}</span>
+                                <img v-else :src="userAvatar" :alt="userName" class="w-full h-full object-cover" />
+                            </div>
+                        </UButton>
+
+                        <!-- Dropdown Menu -->
+                        <div
+                            v-if="isUserMenuOpen"
+                            class="absolute right-0 mt-2 w-72 rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 z-50 overflow-hidden"
+                            @click.stop
+                        >
+                            <div class="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative shrink-0">
+                                        <div class="w-12 h-12 rounded-full border-2 border-emerald-500 dark:border-emerald-400 p-0.5">
+                                            <div class="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold">
+                                                <span v-if="!userAvatar" class="text-sm">{{ userInitials }}</span>
+                                                <img v-else :src="userAvatar" :alt="userName" class="w-full h-full object-cover" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ userName }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ userEmail }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="py-2">
+                                <UButton
+                                    @click="isUserMenuOpen = false; navigateTo('/profile')"
+                                    variant="ghost"
+                                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors justify-start"
+                                    icon="lucide:user"
+                                    label="My Profile"
+                                />
+
+                                <UButton
+                                    @click="isUserMenuOpen = false; navigateTo('/settings')"
+                                    variant="primary"
+                                    class="w-full flex items-center gap-3 py-2.5 px-4 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    icon="lucide:settings"
+                                    label="Settings"
+                                />
+                            </div>
+
+                            <div class="border-t border-gray-200 dark:border-gray-700"></div>
+
+                            <div class="px-4 py-2.5">
+                                <UButton
+                                    @click="colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'"
+                                    variant="primary"
+                                    class="w-full flex items-center justify-between gap-4 text-sm text-gray-700 dark:text-gray-300 transition-colors rounded-lg px-2 py-1.5 -mx-2"
+                                >
+                                    <div class="flex items-center gap-2">
+                                        <UIcon name="lucide:moon" class="w-4 h-4 shrink-0" />
+                                        <span>Dark Mode</span>
+                                    </div>
+                                    <div
+                                        class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        :class="isDarkMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'"
+                                    >
+                                        <span
+                                            class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out"
+                                            :class="isDarkMode ? 'translate-x-4' : 'translate-x-0.5'"
+                                            style="margin-top: 2px;"
+                                        />
+                                    </div>
+                                </UButton>
+                            </div>
+
+                            <div class="px-4 pb-3 pt-2">
+                                <UButton
+                                    @click="isUserMenuOpen = false; navigateTo('/')"
+                                    label="Log out"
+                                    variant="primary"
+                                    color="red"
+                                    class="w-full justify-center border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <UButton
                         variant="primary"
-                        class="md:flex items-center px-2 py-0.5 rounded-lg border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        class="md:flex items-center px-2 py-0.5 rounded-lg border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                         <div class="relative shrink-0">
                             <div class="w-12 h-12 rounded-full border border-purple-200/50 dark:border-purple-300/50 bg-sky-100 dark:bg-sky-900/50 p-0.5">
@@ -200,104 +294,9 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-gray-50 dark:bg-gray-900">
-                <div class="mb-4 sm:mb-6">
-                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2">{{ pageTitle || 'Dashboard' }}</h1>
-                    <p v-if="pageDescription" class="text-sm sm:text-base text-gray-600 dark:text-gray-400">{{ pageDescription }}</p>
-                </div>
+                
                 <slot />
             </main>
-        </div>
-
-        <!-- User Profile -->
-        <div ref="userMenuRef" class="fixed bottom-5 left-3 z-50">
-            <UButton
-                variant="primary"
-                size="sm"
-                class="w-10 h-10 p-0 rounded-full overflow-hidden hover:ring-2 hover:ring-blue-500 dark:hover:ring-blue-400 transition-all border-2 border-emerald-500 dark:border-emerald-400 shadow-lg"
-                :class="isUserMenuOpen ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''"
-                @click="isUserMenuOpen = !isUserMenuOpen"
-            >
-                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white font-semibold text-sm">
-                    <span v-if="!userAvatar">{{ userInitials }}</span>
-                    <img v-else :src="userAvatar" :alt="userName" class="w-full h-full object-cover" />
-                </div>
-            </UButton>
-
-            <div
-                v-if="isUserMenuOpen"
-                class="absolute bottom-14 left-2 w-72 rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 z-50 overflow-hidden"
-                @click.stop
-            >
-                <div class="px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center gap-3">
-                        <div class="relative shrink-0">
-                            <div class="w-12 h-12 rounded-full border-2 border-emerald-500 dark:border-emerald-400 p-0.5">
-                                <div class="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center text-white font-semibold">
-                                    <span v-if="!userAvatar" class="text-sm">{{ userInitials }}</span>
-                                    <img v-else :src="userAvatar" :alt="userName" class="w-full h-full object-cover" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ userName }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ userEmail }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="py-2">
-                    <UButton
-                        @click="isUserMenuOpen = false; navigateTo('/profile')"
-                        variant="ghost"
-                        class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors justify-start"
-                        icon="lucide:user"
-                        label="My Profile"
-                    />
-
-                    <UButton
-                        @click="isUserMenuOpen = false; navigateTo('/settings')"
-                        variant="primary"
-                        class="w-full flex items-center gap-3 py-2.5 px-4 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        icon="lucide:settings"
-                        label="Settings"
-                    />
-                </div>
-
-                <div class="border-t border-gray-200 dark:border-gray-700"></div>
-
-                <div class="px-4 py-2.5">
-                    <UButton
-                        @click="colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'"
-                        variant="primary"
-                        class="w-full flex items-center justify-between gap-4 text-sm text-gray-700 dark:text-gray-300 transition-colors rounded-lg px-2 py-1.5 -mx-2"
-                    >
-                        <div class="flex items-center gap-2">
-                            <UIcon name="lucide:moon" class="w-4 h-4 shrink-0" />
-                            <span>Dark Mode</span>
-                        </div>
-                        <div
-                            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            :class="isDarkMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'"
-                        >
-                            <span
-                                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out"
-                                :class="isDarkMode ? 'translate-x-4' : 'translate-x-0.5'"
-                                style="margin-top: 2px;"
-                            />
-                        </div>
-                    </UButton>
-                </div>
-
-                <div class="px-4 pb-3 pt-2">
-                    <UButton
-                        @click="isUserMenuOpen = false; navigateTo('/')"
-                        label="Log out"
-                        variant="primary"
-                        color="red"
-                        class="w-full justify-center border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    />
-                </div>
-            </div>
         </div>
     </div>
 </template>
@@ -343,7 +342,7 @@ const mainNavItems = [
 const navSections = {
     dashboard: [
         { name: 'Overview', path: '/dashboard', icon: 'lucide:home' },
-        { name: 'Analytics', path: '/dashboard/analytics', icon: 'lucide:trending-up' },
+        { name: 'Analytics', path: 'registration', icon: 'lucide:trending-up' },
         { name: 'Reports', path: '/dashboard/reports', icon: 'lucide:file-bar-chart' },
         { name: 'Statistics', path: '/dashboard/stats', icon: 'lucide:pie-chart' },
     ],
