@@ -7,7 +7,7 @@
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold">Form List</h2>
             <UButton
-              @click="selectedForm = null; isModalOpen = true"
+              @click="handleNewForm"
               icon="i-lucide:plus"
               label="New"
               color="info"
@@ -23,7 +23,7 @@
               :form="form"
               :is-selected="selectedForm?.id === form.id"
               @view="handleFormView"
-              @edit="selectedForm = form; isModalOpen = true"
+              @edit="handleFormEdit"
             />
           </div>
         </template>
@@ -38,7 +38,7 @@
 
   <FormEditModal
     v-model:open="isModalOpen"
-    :form="selectedForm"
+    :form="formForModal"
     
   />
 </template>
@@ -48,6 +48,7 @@ definePageMeta({ layout: 'home' });
 
 const isModalOpen = ref(false);
 const selectedForm = ref(null);
+const formForModal = ref(null);
 
 const forms = ref([
   {
@@ -122,53 +123,19 @@ const handleFormView = (form) => {
   });
 };
 
-// Watch route changes to sync selectedForm with URL
-watch(() => route.query.id, (formId) => {
-  if (formId) {
-    const id = Number(formId);
-    const form = forms.value.find(f => f.id === id);
-    if (form) {
-      selectedForm.value = form;
-    }
-  } else if (route.path === '/masters/form_builder/forms') {
-    // Clear selection when on parent route only (no query param)
-    selectedForm.value = null;
-  }
-}, { immediate: true });
+const handleFormEdit = (form) => {
+  selectedForm.value = form;
+  formForModal.value = form;
+  isModalOpen.value = true;
+};
+
+const handleNewForm = () => {
+  // Don't unselect the current form, just open the modal for creating a new form
+  // Set formForModal to null to indicate it's a new form (not editing existing)
+  formForModal.value = null;
+  isModalOpen.value = true;
+};
 
 // Handle form submission from modal
-const handleFormSubmit = (formData) => {
-  if (formData.id) {
-    // Update existing form
-    const index = forms.value.findIndex(f => f.id === formData.id);
-    if (index !== -1) {
-      forms.value[index] = {
-        ...forms.value[index],
-        title: formData.formTitle,
-        formCode: formData.formCode,
-        template: formData.template,
-        css: formData.css,
-        header: formData.header,
-        footer: formData.footer,
-        letterhead: formData.letterhead,
-        documentType: formData.documentType
-      };
-    }
-  } else {
-    // Create new form
-    forms.value.push({
-      id: forms.value.length + 1,
-      title: formData.formTitle,
-      formCode: formData.formCode,
-      template: formData.template || 'Template Name',
-      css: formData.css || 'CSS',
-      header: formData.header || 'Header',
-      footer: formData.footer || 'Footer',
-      letterhead: formData.letterhead || 'Letterhead',
-      documentType: formData.documentType
-    });
-  }
-  selectedForm.value = null;
-  isModalOpen.value = false;
-};
+
 </script>

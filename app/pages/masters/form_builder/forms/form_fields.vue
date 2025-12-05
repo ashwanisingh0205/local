@@ -24,7 +24,7 @@
           <UCard
             v-for="(field, index) in selectedFormFields"
             :key="field.id || index"
-            class="cursor-pointer  "
+            class="cursor-pointer"
           >
             <div class="flex items-start justify-between gap-4">
               <div class="flex-1 min-w-0">
@@ -45,11 +45,15 @@
             </div>
           </UCard>
         </div>
-        <div v-else-if="selectedForm && selectedFormFields.length === 0" class="flex items-center justify-center text-gray-500 dark:text-gray-400 p-4">
-          <p>No form fields found for this form</p>
+        <div v-else-if="selectedForm && selectedFormFields.length === 0" class="p-8 text-center">
+          <UIcon name="lucide:file-text" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+          <p class="text-gray-600 dark:text-gray-400 mb-2">No form fields found</p>
+          <p class="text-sm text-gray-500 dark:text-gray-500">Click "New" to add a form field</p>
         </div>
-        <div v-else class="flex items-center justify-center text-gray-500 dark:text-gray-400 p-4">
-          <p>Select a form from the list to view its fields</p>
+        <div v-else class="p-8 text-center">
+          <UIcon name="lucide:file-search" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+          <p class="text-gray-600 dark:text-gray-400 mb-2">No form selected</p>
+          <p class="text-sm text-gray-500 dark:text-gray-500">Select a form from the list to view its fields</p>
         </div>
       </template>
     </UCard>
