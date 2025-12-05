@@ -8,7 +8,7 @@
 
     <!-- Form -->
     <UForm v-else-if="internalFormConfig" class="space-y-6" @submit.prevent="handleSubmit">
-      <div class="grid gap-6 md:grid-cols-4">
+      <div class="grid gap-6 md:grid-cols-2">
         <div
           v-for="field in internalFormConfig.fields"
           :key="field.id"
@@ -39,7 +39,9 @@ const props = defineProps({
   formConfig: { type: Object, required: false, default: null },
   initialData: { type: Object, default: null },
   formCode: { type: String, default: null },
-  formParam: { type: Object, default: null }
+  formParam: { type: Object, default: null },
+  form: { type: Object, default: null },
+  formType: { type: String, default: null }
 })
 const emit = defineEmits(['submit'])
 
@@ -87,9 +89,173 @@ const handleSubmit = () => {
   loading.value = false
 }
 
+/* ------------------- Form Edit Configuration ------------------- */
+const getFormEditConfig = () => {
+  return {
+    fields: [
+      { 
+        id: 'formTitle', 
+        label: 'Form Title', 
+        type: 'text',
+        required: true,
+        placeholder: 'Enter form title'
+      },
+      { 
+        id: 'formCode', 
+        label: 'Form Code', 
+        type: 'text',
+        required: true,
+        placeholder: 'Enter form code'
+      },
+      {
+        id: 'template',
+        label: 'Template',
+        type: 'select',
+        options: [
+          'Cold Work Permit',
+          'initial assetment',
+          'emr.html'
+          
+        ],
+        placeholder: 'Select template'
+      },
+      {
+        id: 'css',
+        label: 'CSS',
+        type: 'select',
+        options: [
+          'CSS', 
+          'Default CSS', 
+          'Cold Work Permit CSS',
+        ],
+        placeholder: 'Select CSS'
+      },
+      {
+        id: 'header',
+        label: 'Header',
+        type: 'select',
+        options: [
+          'Header', 
+          'Standard Header', 
+          'Medical Header', 
+          'Hospital Header', 
+          'Clinic Header', 
+          'Department Header',
+          'Emergency Header',
+          'ICU Header',
+          'OPD Header',
+          'Surgery Header',
+          'Laboratory Header',
+          'Radiology Header',
+          'Pharmacy Header',
+          
+        ],
+        placeholder: 'Select header'
+      },
+      {
+        id: 'footer',
+        label: 'Footer',
+        type: 'select',
+        options: [
+          'Footer', 
+          'Standard Footer', 
+          'Medical Footer', 
+          'Hospital Footer', 
+          'Clinic Footer', 
+          'Department Footer',
+          'Emergency Footer',
+          'ICU Footer',
+          'OPD Footer',
+          'Surgery Footer',
+         
+        ],
+        placeholder: 'Select footer'
+      },
+      {
+        id: 'letterhead',
+        label: 'Letter Head',
+        type: 'select',
+        options: [
+          'Letterhead', 
+          'Hospital Letterhead', 
+          'Clinic Letterhead', 
+          'Department Letterhead', 
+          'Medical Letterhead', 
+          'Standard Letterhead',
+          'Emergency Letterhead',
+          'ICU Letterhead',
+          'OPD Letterhead',
+          'Surgery Letterhead',
+          'Laboratory Letterhead',
+          'Radiology Letterhead',
+          'Pharmacy Letterhead',
+          'Administrative Letterhead',
+          'Billing Letterhead',
+         
+        ],
+        placeholder: 'Select letterhead'
+      },
+      {
+        id: 'documentType',
+        label: 'Document Type',
+        type: 'select',
+        options: [
+          'Document Type 1', 
+          'Medical Report', 
+          'Patient Assessment', 
+          'Treatment Plan', 
+          'Discharge Summary', 
+          'Prescription', 
+          'Lab Report', 
+          'Clinical Note', 
+          'Progress Note', 
+          'Consultation Report', 
+          'Emergency Report', 
+          'Surgical Report',
+          'Admission Report',
+          'Discharge Report',
+          'Operation Report',
+          'Anesthesia Report',
+          'Pathology Report',
+          'Radiology Report',
+          'Blood Test Report',
+          'Urine Test Report',
+          
+        ],
+        placeholder: 'Select document type'
+      }
+    ]
+  }
+}
+
+const getFormEditInitialData = () => {
+  if (!props.form) return {};
+  
+  return {
+    formTitle: props.form.title || '',
+    formCode: props.form.formCode || '',
+    template: props.form.template || null,
+    css: props.form.css || null,
+    header: props.form.header || null,
+    footer: props.form.footer || null,
+    letterhead: props.form.letterhead || null,
+    documentType: props.form.documentType || null
+  };
+}
+
 /* ------------------- Load Form Data ------------------- */
 onMounted(async () => {
   try {
+    // Handle form-edit type
+    if (props.formType === 'form-edit') {
+      internalFormConfig.value = getFormEditConfig()
+      const source = getFormEditInitialData()
+      formData.value = Object.fromEntries(
+        internalFormConfig.value.fields.map(f => [f.id, getValue(f, source)])
+      )
+      return
+    }
+    
     // If formConfig is provided as prop, use it; otherwise load from API
     if (props.formConfig) {
       internalFormConfig.value = props.formConfig
@@ -107,6 +273,16 @@ onMounted(async () => {
     console.error('Error loading form:', err)
   }
 })
+
+// Watch for form prop changes (for form-edit type)
+watch(() => props.form, () => {
+  if (props.formType === 'form-edit' && internalFormConfig.value) {
+    const source = getFormEditInitialData()
+    formData.value = Object.fromEntries(
+      internalFormConfig.value.fields.map(f => [f.id, getValue(f, source)])
+    )
+  }
+}, { deep: true })
 </script>
 
 

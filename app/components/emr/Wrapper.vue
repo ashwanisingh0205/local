@@ -21,12 +21,11 @@
     <USelectMenu
       v-else-if="field.type === 'select'"
       v-model="localValue"
-      :options="fieldOptions"
+      :items="fieldItems"
       :placeholder="field.placeholder"
-      
+      searchable
       :icon="field.icon"
       class="w-full"
-      
     />
 
     <!-- Textarea -->
@@ -118,10 +117,10 @@ const emit = defineEmits(['update:modelValue'])
 
 /* ------------------ Main v-model Handler ------------------ */
 const localValue = computed({
-  get: () =>
-    props.field.type === 'group'
-      ? nestedValues.value
-      : props.modelValue,
+  get: () => {
+    if (props.field.type === 'group') return nestedValues.value
+    return props.modelValue
+  },
 
   set: val => {
     if (props.field.type === 'group') return // groups handled separately
@@ -134,7 +133,14 @@ const localValue = computed({
   }
 })
 
-/* ------------------ Options ------------------ */
+/* ------------------ Items for USelectMenu ------------------ */
+const fieldItems = computed(() => {
+  const options = props.field.options || []
+  // Return simple array of strings for USelectMenu items prop
+  return options.map(opt => typeof opt === 'object' ? opt.value || opt.label : opt)
+})
+
+/* ------------------ Options (for other field types) ------------------ */
 const fieldOptions = computed(() =>
   (props.field.options || []).map(opt =>
     typeof opt === 'object' ? opt : { label: opt, value: opt }

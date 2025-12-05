@@ -38,6 +38,8 @@
 
   <FormEditModal
     v-model:open="isModalOpen"
+    :form="selectedForm"
+    
   />
 </template>
 
@@ -134,9 +136,11 @@ watch(() => route.query.id, (formId) => {
   }
 }, { immediate: true });
 
+// Handle form submission from modal
 const handleFormSubmit = (formData) => {
-  if (selectedForm.value) {
-    const index = forms.value.findIndex(f => f.id === selectedForm.value.id);
+  if (formData.id) {
+    // Update existing form
+    const index = forms.value.findIndex(f => f.id === formData.id);
     if (index !== -1) {
       forms.value[index] = {
         ...forms.value[index],
@@ -151,6 +155,7 @@ const handleFormSubmit = (formData) => {
       };
     }
   } else {
+    // Create new form
     forms.value.push({
       id: forms.value.length + 1,
       title: formData.formTitle,
@@ -164,5 +169,6 @@ const handleFormSubmit = (formData) => {
     });
   }
   selectedForm.value = null;
+  isModalOpen.value = false;
 };
 </script>

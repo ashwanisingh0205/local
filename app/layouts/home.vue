@@ -95,7 +95,7 @@
                         <UButton
                             @click="navigateTo('/upgrade')"
                             variant="soft"
-                            color="gray"
+                            color="neutral"
                             block
                             icon="lucide:sparkles"
                             label="Upgrade"
