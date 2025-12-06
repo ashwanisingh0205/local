@@ -41,22 +41,5 @@ const isOpen = computed({
   set: (value) => emit('update:open', value)
 });
 
-// Handle form submission from DynamicForm
-const handleSubmit = (formData) => {
-  // Map formData back to the expected format
-  const submitData = {
-    formTitle: formData.formTitle || '',
-    formCode: formData.formCode || '',
-    template: formData.template || null,
-    css: formData.css || null,
-    header: formData.header || null,
-    footer: formData.footer || null,
-    letterhead: formData.letterhead || null,
-    documentType: formData.documentType || null,
-    id: props.form?.id
-  };
-  
-  emit('submit', submitData);
-  isOpen.value = false;
-};
+
 </script>

@@ -95,10 +95,16 @@ const getFormEditConfig = () => {
     fields: [
       { 
         id: 'formTitle', 
-        label: 'Form Title', 
-        type: 'text',
+        label: 'Form Type', 
+        type: 'select',
         required: true,
-        placeholder: 'Enter form title'
+        placeholder: 'Enter Form Type',
+        options: [
+          'FORM',
+          'SURVEY',
+          'WORKFLOW'
+          
+        ],
       },
       { 
         id: 'formCode', 
@@ -112,21 +118,18 @@ const getFormEditConfig = () => {
         label: 'Template',
         type: 'select',
         options: [
-          'Cold Work Permit',
-          'initial assetment',
-          'emr.html'
+          'PRESCRIPTION',
+          'DS'
           
         ],
         placeholder: 'Select template'
       },
       {
-        id: 'css',
-        label: 'CSS',
+        id: 'email template',
+        label: 'Email Template',
         type: 'select',
         options: [
-          'CSS', 
-          'Default CSS', 
-          'Cold Work Permit CSS',
+          'REGISTRATION',
         ],
         placeholder: 'Select CSS'
       },
@@ -135,19 +138,9 @@ const getFormEditConfig = () => {
         label: 'Header',
         type: 'select',
         options: [
-          'Header', 
-          'Standard Header', 
-          'Medical Header', 
-          'Hospital Header', 
-          'Clinic Header', 
-          'Department Header',
-          'Emergency Header',
-          'ICU Header',
-          'OPD Header',
-          'Surgery Header',
-          'Laboratory Header',
-          'Radiology Header',
-          'Pharmacy Header',
+          'IPD',
+          'OPD',
+          'STAFF'
           
         ],
         placeholder: 'Select header'
@@ -157,72 +150,46 @@ const getFormEditConfig = () => {
         label: 'Footer',
         type: 'select',
         options: [
-          'Footer', 
-          'Standard Footer', 
-          'Medical Footer', 
-          'Hospital Footer', 
-          'Clinic Footer', 
-          'Department Footer',
-          'Emergency Footer',
-          'ICU Footer',
-          'OPD Footer',
-          'Surgery Footer',
+          'LAB'
          
         ],
         placeholder: 'Select footer'
       },
       {
-        id: 'letterhead',
-        label: 'Letter Head',
+        id: 'WHATSAPP TEMPLATE',
+        label: 'Whatsapp Template',
         type: 'select',
         options: [
-          'Letterhead', 
-          'Hospital Letterhead', 
-          'Clinic Letterhead', 
-          'Department Letterhead', 
-          'Medical Letterhead', 
-          'Standard Letterhead',
-          'Emergency Letterhead',
-          'ICU Letterhead',
-          'OPD Letterhead',
-          'Surgery Letterhead',
-          'Laboratory Letterhead',
-          'Radiology Letterhead',
-          'Pharmacy Letterhead',
-          'Administrative Letterhead',
-          'Billing Letterhead',
+          'PAYMENT',
+          'NEW SERVICE'
          
         ],
         placeholder: 'Select letterhead'
       },
       {
-        id: 'documentType',
-        label: 'Document Type',
+        id: 'SMS TEMPLATE',
+        label: 'Sms Template',
         type: 'select',
         options: [
-          'Document Type 1', 
-          'Medical Report', 
-          'Patient Assessment', 
-          'Treatment Plan', 
-          'Discharge Summary', 
-          'Prescription', 
-          'Lab Report', 
-          'Clinical Note', 
-          'Progress Note', 
-          'Consultation Report', 
-          'Emergency Report', 
-          'Surgical Report',
-          'Admission Report',
-          'Discharge Report',
-          'Operation Report',
-          'Anesthesia Report',
-          'Pathology Report',
-          'Radiology Report',
-          'Blood Test Report',
-          'Urine Test Report',
-          
+          'PAYMENT',
+         
         ],
         placeholder: 'Select document type'
+      },
+      {
+        id:'Button Theme',
+        label: 'Button Theme',
+        type: 'select',
+        options: [
+          'PRIMARY',
+          'SECONDARY',
+          'SUCCESS',
+          'DANGER',
+          'WARNING',
+          'INFO',
+         
+        ],
+        placeholder: 'Select button theme'
       }
     ]
   }
