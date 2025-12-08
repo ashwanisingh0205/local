@@ -312,7 +312,8 @@ const navSections = {
         { name: 'Overview', path: '/dashboard', icon: 'lucide:home' },
         { name: 'Forms', path: '/masters/form_builder/forms', icon: 'lucide:file-text' },
         { name: 'Reports', path: '/reports', icon: 'lucide:file-bar-chart' },
-        { name: 'Statistics', path: '/dashboard/stats', icon: 'lucide:pie-chart' },
+        {name: 'Statistics', path: '/statistics', icon: 'lucide:pie-chart' },
+        {name:'Patient', path: '/patient', icon: 'lucide:user' },
     ],
     projects: [
         { name: 'All Projects', path: '/registration', icon: 'lucide:folder-open' },
