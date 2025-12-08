@@ -9,7 +9,7 @@ export const usePatientData = () => {
     pending.value = true
     error.value = null
     try {
-      const response = await axios.get('http://localhost:4000/marc/admission')
+      const response = await axios.get('https://trading-server-eight.vercel.app/marc/admission')
       users.value = response.data
     } catch (err) {
       error.value = err.response?.data || err.message || err
@@ -42,7 +42,7 @@ export const usePatientStatistics = () => {
     pending.value = true
     error.value = null
     try {
-      const response = await axios.get('http://localhost:4000/marc/admission_highlight')
+      const response = await axios.get('https://trading-server-eight.vercel.app/marc/admission_highlight')
       statistics.value = response.data
     } catch (err){
       error.value = err.response?.data || err.message || err
@@ -73,7 +73,7 @@ export const usePatient = () => {
     pending.value = true
     error.value = null
     try {
-      const response = await axios.get('http://localhost:4000/marc/patient_list')
+      const response = await axios.get('https://trading-server-eight.vercel.app/marc/patient_list')
       patients.value = response.data
     } catch (err){
       error.value = err.response?.data || err.message || err
