@@ -119,11 +119,16 @@ const handleSubmit = async () => {
     const numericFields = new Set([
       'corporate_id', 'unit_id', 'category_id', 'template_id', 
       'header_id', 'footer_id', 'css_id', 'pdf_id', 'letterhead_id',
-      'whatsapp_template_id', 'sms_template_id', 'email_template_id'
+      'whatsapp_template_id', 'sms_template_id', 'email_template_id',
+      'form_id', 'min_value', 'max_value', 'standard_value', 'standard_value_level2',
+      'standard_value_level3', 'label_width', 'template_id', 'component_id', 'col', 'priority'
     ])
     
     // Define boolean fields
-    const booleanFields = new Set(['status_pdf', 'status_universal', 'status'])
+    const booleanFields = new Set([
+      'status_pdf', 'status_universal', 'status', 
+      'lock_value_consultant', 'status_required', 'status_readonly'
+    ])
     
     // Transform the payload with proper data types
     const payload = {}
@@ -161,21 +166,34 @@ const handleSubmit = async () => {
       payload.status = true
     }
 
-    // Validate required fields before submission
-    const requiredFields = {
-      corporate_id: 'Corporate ID',
-      unit_id: 'Unit ID',
-      category_id: 'Category ID',
-      form_code: 'Form Code',
-      form_name: 'Form Name'
+    // Validate required fields before submission based on form type
+    let requiredFields = {}
+    let apiEndpoint = 'http://13.200.174.164:3001/v1/masters/forms/form'
+    
+    if (props.formType === 'form-field-edit') {
+      requiredFields = {
+        form_id: 'Form ID',
+        data_type: 'Data Type',
+        field_code: 'Field Code',
+        label: 'Label'
+      }
+      apiEndpoint = 'http://13.200.174.164:3001/v1/masters/forms/form/field'
+    } else if (props.formType === 'form-edit') {
+      requiredFields = {
+        corporate_id: 'Corporate ID',
+        unit_id: 'Unit ID',
+        category_id: 'Category ID',
+        form_code: 'Form Code',
+        form_name: 'Form Name'
+      }
     }
     
     const missingFields = []
     Object.keys(requiredFields).forEach(field => {
       const value = payload[field]
-      // Check if field is missing, empty, or zero (for numeric fields)
+      // Check if field is missing, empty, or zero (for numeric fields, except form_id which can be 0)
       if (value === undefined || value === null || value === '' || 
-          (typeof value === 'number' && value === 0 && field !== 'status')) {
+          (typeof value === 'number' && value === 0 && field !== 'status' && field !== 'form_id')) {
         missingFields.push(requiredFields[field])
       }
     })
@@ -191,7 +209,7 @@ const handleSubmit = async () => {
     
     // POST to API endpoint
     const response = await axios.post(
-      'http://13.200.174.164:3001/v1/masters/forms/form',
+      apiEndpoint,
       payload,
       {
         headers: {
@@ -467,6 +485,262 @@ const getFormEditInitialData = () => {
   };
 }
 
+/* ------------------- Form Field Edit Configuration ------------------- */
+const getFormFieldEditConfig = () => {
+  return {
+    fields: [
+      {
+        id: 'corporate_id',
+        label: 'Corporate ID',
+        type: 'select',
+        placeholder: 'Select corporate',
+        options: [1, 2, 3, 4]
+      },
+      {
+        id: 'unit_id',
+        label: 'Unit ID',
+        type: 'select',
+        placeholder: 'Select unit',
+        options: [1, 2, 3, 4]
+      },
+      {
+        id: 'form_id',
+        label: 'Form ID',
+        type: 'number',
+        required: true,
+        placeholder: 'Form ID (auto-filled)',
+        readonly: true
+      },
+      {
+        id: 'data_type',
+        label: 'Data Type',
+        type: 'select',
+        required: true,
+        placeholder: 'Select data type',
+        options: ['TEXT', 'NUMBER', 'DATE', 'DROPDOWN', 'CHECKBOX', 'RADIO', 'FILE', 'CARD', 'GROUP', 'TAB', 'SECTION', 'TABLE']
+      },
+      {
+        id: 'data_type_config',
+        label: 'Data Type Config',
+        type: 'textarea',
+        placeholder: 'Enter JSON config'
+      },
+      {
+        id: 'min_value',
+        label: 'Min Value',
+        type: 'number',
+        placeholder: 'Enter minimum value'
+      },
+      {
+        id: 'max_value',
+        label: 'Max Value',
+        type: 'number',
+        placeholder: 'Enter maximum value'
+      },
+      {
+        id: 'standard_value',
+        label: 'Standard Value',
+        type: 'number',
+        placeholder: 'Enter standard value'
+      },
+      {
+        id: 'standard_value_level2',
+        label: 'Standard Value Level 2',
+        type: 'number',
+        placeholder: 'Enter standard value level 2'
+      },
+      {
+        id: 'standard_value_level3',
+        label: 'Standard Value Level 3',
+        type: 'number',
+        placeholder: 'Enter standard value level 3'
+      },
+      {
+        id: 'standard_config',
+        label: 'Standard Config',
+        type: 'textarea',
+        placeholder: 'Enter JSON config'
+      },
+      {
+        id: 'field_code',
+        label: 'Field Code',
+        type: 'text',
+        required: true,
+        placeholder: 'Enter field code'
+      },
+      {
+        id: 'parent_field_code',
+        label: 'Parent Field Code',
+        type: 'text',
+        placeholder: 'Enter parent field code (optional)'
+      },
+      {
+        id: 'label',
+        label: 'Label',
+        type: 'text',
+        required: true,
+        placeholder: 'Enter field label'
+      },
+      {
+        id: 'label_position',
+        label: 'Label Position',
+        type: 'select',
+        placeholder: 'Select label position',
+        options: ['TOP', 'LEFT', 'RIGHT', 'BOTTOM']
+      },
+      {
+        id: 'label_style',
+        label: 'Label Style',
+        type: 'select',
+        placeholder: 'Select label style',
+        options: ['T1', 'T2', 'H1', 'H2', 'H3']
+      },
+      {
+        id: 'label_width',
+        label: 'Label Width',
+        type: 'number',
+        placeholder: 'Enter label width (0-100)'
+      },
+      {
+        id: 'value',
+        label: 'Value',
+        type: 'textarea',
+        placeholder: 'Enter default value'
+      },
+      {
+        id: 'choice_code',
+        label: 'Choice Code',
+        type: 'text',
+        placeholder: 'Enter choice code (e.g., hr.departments)'
+      },
+      {
+        id: 'templates',
+        label: 'Templates',
+        type: 'textarea',
+        placeholder: 'Enter templates JSON'
+      },
+      {
+        id: 'template_id',
+        label: 'Template ID',
+        type: 'select',
+        placeholder: 'Select template',
+        options: [0, 1, 2, 3, 4]
+      },
+      {
+        id: 'server_trigger',
+        label: 'Server Trigger',
+        type: 'select',
+        placeholder: 'Select server trigger',
+        options: ['click', 'blur', 'change', 'focus']
+      },
+      {
+        id: 'server_function',
+        label: 'Server Function',
+        type: 'textarea',
+        placeholder: 'Enter server function'
+      },
+      {
+        id: 'server_function_fields',
+        label: 'Server Function Fields',
+        type: 'textarea',
+        placeholder: 'Enter server function fields (JSON array)'
+      },
+      {
+        id: 'data_endpoint',
+        label: 'Data Endpoint',
+        type: 'text',
+        placeholder: 'Enter data endpoint URL'
+      },
+      {
+        id: 'component_id',
+        label: 'Component ID',
+        type: 'select',
+        placeholder: 'Select component',
+        options: [0, 1, 2, 3, 4]
+      },
+      {
+        id: 'col',
+        label: 'Column',
+        type: 'number',
+        placeholder: 'Enter column number'
+      },
+      {
+        id: 'bind_to',
+        label: 'Bind To',
+        type: 'text',
+        placeholder: 'Enter bind to field'
+      },
+      {
+        id: 'bind_value',
+        label: 'Bind Value',
+        type: 'text',
+        placeholder: 'Enter bind value'
+      },
+      {
+        id: 'text_prefix',
+        label: 'Text Prefix',
+        type: 'text',
+        placeholder: 'Enter text prefix'
+      },
+      {
+        id: 'text_suffix',
+        label: 'Text Suffix',
+        type: 'text',
+        placeholder: 'Enter text suffix'
+      },
+      {
+        id: 'lock_value_with',
+        label: 'Lock Value With',
+        type: 'select',
+        placeholder: 'Select lock value with',
+        options: ['NA', 'PT', 'VISIT']
+      },
+      {
+        id: 'lock_value_consultant',
+        label: 'Lock Value Consultant',
+        type: 'checkbox'
+      },
+      {
+        id: 'data',
+        label: 'Data',
+        type: 'textarea',
+        placeholder: 'Enter data JSON'
+      },
+      {
+        id: 'priority',
+        label: 'Priority',
+        type: 'number',
+        placeholder: 'Enter priority'
+      },
+      {
+        id: 'status_required',
+        label: 'Status Required',
+        type: 'checkbox'
+      },
+      {
+        id: 'status_readonly',
+        label: 'Status Readonly',
+        type: 'checkbox'
+      },
+      {
+        id: 'status_universal',
+        label: 'Status Universal',
+        type: 'checkbox'
+      }
+    ]
+  }
+}
+
+const getFormFieldEditInitialData = () => {
+  if (!props.form) return {};
+  
+  return {
+    corporate_id: props.form.corporate_id || 0,
+    unit_id: props.form.unit_id || 0,
+    form_id: props.form.form_id || props.form.id || null
+  };
+}
+
 /* ------------------- Load Form Data ------------------- */
 onMounted(async () => {
   try {
@@ -474,6 +748,16 @@ onMounted(async () => {
     if (props.formType === 'form-edit') {
       internalFormConfig.value = getFormEditConfig()
       const source = getFormEditInitialData()
+      formData.value = Object.fromEntries(
+        internalFormConfig.value.fields.map(f => [f.id, getValue(f, source)])
+      )
+      return
+    }
+    
+    // Handle form-field-edit type
+    if (props.formType === 'form-field-edit') {
+      internalFormConfig.value = getFormFieldEditConfig()
+      const source = getFormFieldEditInitialData()
       formData.value = Object.fromEntries(
         internalFormConfig.value.fields.map(f => [f.id, getValue(f, source)])
       )
@@ -498,10 +782,15 @@ onMounted(async () => {
   }
 })
 
-// Watch for form prop changes (for form-edit type)
+// Watch for form prop changes (for form-edit and form-field-edit types)
 watch(() => props.form, () => {
   if (props.formType === 'form-edit' && internalFormConfig.value) {
     const source = getFormEditInitialData()
+    formData.value = Object.fromEntries(
+      internalFormConfig.value.fields.map(f => [f.id, getValue(f, source)])
+    )
+  } else if (props.formType === 'form-field-edit' && internalFormConfig.value) {
+    const source = getFormFieldEditInitialData()
     formData.value = Object.fromEntries(
       internalFormConfig.value.fields.map(f => [f.id, getValue(f, source)])
     )

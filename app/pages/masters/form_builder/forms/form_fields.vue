@@ -48,11 +48,18 @@
       </template>
     </UCard>
   </div>
+
+  <FormFieldEditModal
+    v-model:open="isFieldModalOpen"
+    :form="selectedForm"
+    @submit="handleFieldSubmit"
+  />
 </template>
 
 <script setup>
 import axios from 'axios';
 import FormRenderer from '../../../../components/form_builder/FormRenderer.vue';
+import FormFieldEditModal from '../../../../components/FormFieldEditModal.vue';
 
 definePageMeta({ layout: 'home' });
 
@@ -64,6 +71,7 @@ const SelectedForm = inject('selectedForm', null);
 const formConfig = ref(null);
 const loading = ref(false);
 const error = ref(null);
+const isFieldModalOpen = ref(false);
 
 // Get selected form from injected value (synced with parent)
 const selectedForm = computed(() => {
@@ -182,7 +190,19 @@ const loadFormFields = async (formCode) => {
 };
 
 const handleNewFormField = () => {
-  console.log('New form field for:', selectedForm.value);
+  if (!selectedForm.value) {
+    error.value = 'Please select a form first';
+    return;
+  }
+  isFieldModalOpen.value = true;
+};
+
+const handleFieldSubmit = async (submitData) => {
+  console.log('Form field submitted:', submitData);
+  // Reload form fields after successful submission
+  if (selectedForm.value?.form_code) {
+    await loadFormFields(selectedForm.value.form_code);
+  }
 };
 
 const handleFormFieldEdit = (field) => {
