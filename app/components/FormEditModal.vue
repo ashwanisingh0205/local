@@ -21,6 +21,7 @@
       <DynamicForm
         :form="props.form"
         form-type="form-edit"
+        @close="isOpen = false"
       />
     </template>
   </UModal>

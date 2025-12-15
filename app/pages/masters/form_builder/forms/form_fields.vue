@@ -6,7 +6,7 @@
           <h2 class="text-lg font-semibold">
             Form Field
             <span v-if="selectedForm" class="text-sm text-gray-500 font-normal">
-              - {{ selectedForm.title }}
+              - {{ selectedForm.title || selectedForm.form_name }}
             </span>
           </h2>
           <UButton
@@ -20,32 +20,22 @@
       </template>
 
       <template #default>
-        <div v-if="selectedForm && selectedFormFields.length > 0" class="p-4 space-y-2">
-          <UCard
-            v-for="(field, index) in selectedFormFields"
-            :key="field.id || index"
-            class="cursor-pointer"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <UBadge :label="field.type" color="error" size="xs" />
-                  <span class="text-xs text-gray-500">{{ field.id }}</span>
-                </div>
-                <p class="text-sm mb-1 font-medium">{{ field.description }}</p>
-                <code class="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ field.key }}</code>
-              </div>
-              <UButton
-                @click.stop="handleFormFieldEdit(field)"
-                size="xs"
-                icon="i-lucide:pencil"
-                variant="outline"
-                color="neutral"
-              />
-            </div>
-          </UCard>
+        <div v-if="loading" class="p-8 text-center text-gray-500">
+          <UIcon name="lucide:loader-2" class="w-8 h-8 mx-auto mb-2 animate-spin" />
+          <p>Loading form fields...</p>
         </div>
-        <div v-else-if="selectedForm && selectedFormFields.length === 0" class="p-8 text-center">
+        <div v-else-if="error" class="p-8 text-center text-red-500">
+          <UIcon name="lucide:alert-circle" class="w-8 h-8 mx-auto mb-2" />
+          <p>{{ error }}</p>
+        </div>
+        <div v-else-if="selectedForm && formConfig && formConfig.fields && formConfig.fields.length > 0" class="p-4">
+          <!-- Debug info - temporarily enabled to help debug -->
+          
+          <UForm>
+            <FormRenderer :fields="formConfig.fields" />
+          </UForm>
+        </div>
+        <div v-else-if="selectedForm && !loading && (!formConfig || !formConfig.fields || formConfig.fields.length === 0)" class="p-8 text-center">
           <UIcon name="lucide:file-text" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
           <p class="text-gray-600 dark:text-gray-400 mb-2">No form fields found</p>
           <p class="text-sm text-gray-500 dark:text-gray-500">Click "New" to add a form field</p>
@@ -61,6 +51,9 @@
 </template>
 
 <script setup>
+import axios from 'axios';
+import FormRenderer from '../../../../components/form_builder/FormRenderer.vue';
+
 definePageMeta({ layout: 'home' });
 
 const route = useRoute();
@@ -68,58 +61,125 @@ const route = useRoute();
 // Inject forms and selectedForm from parent component
 const SelectedForm = inject('selectedForm', null);
 
-// Mock form fields data - in production, this would come from an API
-const formFieldsData = {
-  1: [
-    { type: 'TEXT', id: 101, description: 'Patient chief complaint', key: 'CHIEF-COMPLAINT' },
-    { type: 'TEXTAREA', id: 102, description: 'Detailed complaint description', key: 'COMPLAINT-DETAIL' },
-    { type: 'TEXT', id: 201, description: 'Onset of symptoms', key: 'ONSET' },
-    { type: 'TEXT', id: 202, description: 'Duration of illness', key: 'DURATION' },
-    { type: 'RADIO', id: 301, description: 'Smoking status', key: 'SMOKING-STATUS' },
-    { type: 'TEXT', id: 401, description: 'Medication name', key: 'MEDICATION-NAME' }
-  ],
-  2: [
-    { type: 'TEXT', id: 101, description: 'Patient chief complaint', key: 'CHIEF-COMPLAINT' },
-    { type: 'TEXTAREA', id: 102, description: 'Detailed complaint description', key: 'COMPLAINT-DETAIL' },
-    { type: 'TEXT', id: 201, description: 'Onset of symptoms', key: 'ONSET' },
-    { type: 'RADIO', id: 301, description: 'Smoking status', key: 'SMOKING-STATUS' },
-    { type: 'TEXT', id: 401, description: 'Medication name', key: 'MEDICATION-NAME' }
-  ],
-  3: [
-    { type: 'RADIO', id: 696, description: '1. Identified the patient and checked doctor\'s order', key: 'DOCTORS-ORDER' },
-    { type: 'RADIO', id: 380, description: 'Given dorsal recumbent position and draped patient.', key: 'DORSAL-RECUMBENT' },
-    { type: 'RADIO', id: 384, description: 'Applied sterile drape and applied sterile gloves', key: 'APPLIED-STERILE' },
-    { type: 'TEXT', id: 377, description: 'State the reason for catheterization', key: 'STATE' },
-    { type: 'RADIO', id: 381, description: 'The urethral meatus was cleaned with sterile saline and betadine.', key: 'URETHRAL-MEATUS' },
-    { type: 'TEXT', id: 382, description: 'Foley\'s size', key: 'FOLEYS-SIZE' },
-    { type: 'TEXT', id: 383, description: 'Foley\'s Type', key: 'TYPE' },
-    { type: 'RADIO', id: 379, description: 'Provided privacy for the patient and explained the patient about the procedure', key: 'PRIVACY' },
-    { type: 'RADIO', id: 385, description: 'Removed plastic covering from catheter and Use sterile lubricant: Lubricated catheter.', key: 'LUBRICATED' }
-  ],
-  4: [
-    { type: 'TEXT', id: 601, description: 'Blood Pressure', key: 'BP' },
-    { type: 'TEXT', id: 602, description: 'Heart Rate', key: 'HR' },
-    { type: 'TEXT', id: 603, description: 'Temperature', key: 'TEMP' },
-    { type: 'TEXT', id: 604, description: 'Respiratory Rate', key: 'RR' }
-  ],
-  5: [
-    { type: 'TEXT', id: 801, description: 'Systolic BP', key: 'SYS-BP' },
-    { type: 'TEXT', id: 802, description: 'Diastolic BP', key: 'DIA-BP' },
-    { type: 'TEXT', id: 803, description: 'Pulse', key: 'PULSE' }
-  ]
-};
+const formConfig = ref(null);
+const loading = ref(false);
+const error = ref(null);
 
 // Get selected form from injected value (synced with parent)
 const selectedForm = computed(() => {
   return SelectedForm?.value || null;
 });
 
-// Get form fields for selected form
-const selectedFormFields = computed(() => {
-  if (!selectedForm.value || !selectedForm.value.id) return [];
-  const fields = formFieldsData[selectedForm.value.id];
-  return Array.isArray(fields) ? fields : [];
+// Apply width calculation to fields (same as hr.vue)
+const applyWidthCalculation = (fields) => {
+  fields.forEach(f => {
+    let labelWidth = f.label_width;
+    if (typeof labelWidth === "string" && labelWidth.includes('%')) {
+      labelWidth = Number.parseInt(labelWidth.replace('%', ''), 10);
+    }
+    if (!labelWidth || labelWidth === 0) {
+      labelWidth = 30;
+    }
+    f.value_width = 100 - labelWidth;
+    f.label_width = labelWidth;
+    if (Array.isArray(f.fields)) {
+      applyWidthCalculation(f.fields);
+    }
+  });
+};
+
+// Also handle route query params for direct navigation or page refresh
+const forms = inject('forms', ref([]));
+
+// Watch for selected form changes and fetch fields
+watch(selectedForm, async (newForm, oldForm) => {
+  console.log('Selected form changed:', newForm, oldForm);
+  // Only fetch if form changed and has form_code
+  if (newForm && newForm.form_code) {
+    if (newForm.form_code !== oldForm?.form_code) {
+      console.log('Loading form fields for:', newForm.form_code);
+      await loadFormFields(newForm.form_code);
+    }
+  } else if (!newForm) {
+    formConfig.value = null;
+  }
+}, { immediate: true });
+
+// Watch route query params as fallback
+watch(() => route.query.id, async (formId) => {
+  console.log('Route query id changed:', formId);
+  if (formId && forms.value.length > 0) {
+    const formIdNum = Number.parseInt(formId, 10);
+    // If selectedForm doesn't match or is not set, try to load from forms list
+    if (!selectedForm.value || selectedForm.value.id !== formIdNum) {
+      const form = forms.value.find(f => f.id === formIdNum);
+      if (form && form.form_code) {
+        console.log('Loading form fields from route query:', form.form_code);
+        await loadFormFields(form.form_code);
+      }
+    }
+  }
+}, { immediate: true });
+
+// Watch forms list to handle case when it loads after component mount
+watch(() => forms.value.length, () => {
+  console.log('Forms list updated, length:', forms.value.length);
+  // If we have a route query but forms weren't loaded before, try again
+  if (route.query.id && forms.value.length > 0 && !formConfig.value) {
+    const formIdNum = Number.parseInt(route.query.id, 10);
+    const form = forms.value.find(f => f.id === formIdNum);
+    if (form && form.form_code) {
+      console.log('Loading form fields after forms list loaded:', form.form_code);
+      loadFormFields(form.form_code);
+    }
+  }
 });
+
+// Fetch form fields from API
+const loadFormFields = async (formCode) => {
+  if (!formCode) {
+    console.log('No form code provided');
+    formConfig.value = null;
+    return;
+  }
+
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    const baseUrl = 'http://13.200.174.164:3001';
+    const url = `${baseUrl}/v1/form/formdata?form_code=${formCode}`;
+    
+    console.log('Fetching form fields from:', url);
+    const response = await axios.get(url);
+    const data = response.data;
+    
+    console.log('API Response:', data);
+    
+    if (data.success && data.form && Array.isArray(data.fields)) {
+      // Store form config with form, fields, and fieldMap (same structure as hr.vue)
+      formConfig.value = {
+        form: data.form,
+        fields: data.fields,
+        fieldMap: data.fieldMap || {}
+      };
+      // Apply width calculation to fields
+      applyWidthCalculation(formConfig.value.fields);
+      console.log('Form config set:', formConfig.value);
+      console.log('Fields count:', formConfig.value.fields.length);
+    } else {
+      error.value = 'Invalid response format from API';
+      formConfig.value = null;
+      console.error('Invalid API response:', data);
+    }
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message || 'Failed to load form fields';
+    formConfig.value = null;
+    console.error('Error loading form fields:', err);
+  } finally {
+    loading.value = false;
+  }
+};
 
 const handleNewFormField = () => {
   console.log('New form field for:', selectedForm.value);
@@ -128,5 +188,25 @@ const handleNewFormField = () => {
 const handleFormFieldEdit = (field) => {
   console.log('Edit form field:', field);
 };
+
+// Handle initial load
+onMounted(() => {
+  console.log('Form fields component mounted');
+  console.log('Selected form:', selectedForm.value);
+  console.log('Route query:', route.query);
+  
+  // If we have a route query id but no selectedForm, try to load it
+  if (route.query.id && !selectedForm.value) {
+    const formIdNum = Number.parseInt(route.query.id, 10);
+    const form = forms.value.find(f => f.id === formIdNum);
+    if (form && form.form_code) {
+      console.log('Loading form on mount from route query:', form.form_code);
+      loadFormFields(form.form_code);
+    }
+  } else if (selectedForm.value && selectedForm.value.form_code) {
+    console.log('Loading form on mount from selectedForm:', selectedForm.value.form_code);
+    loadFormFields(selectedForm.value.form_code);
+  }
+});
 </script>
 

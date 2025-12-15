@@ -1,9 +1,9 @@
 <template>
     <UFormField :label="field.label">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 border border-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
+      <div class="overflow-x-auto dark:bg-gray-800">
+        <table class="min-w-full divide-y dark:divide-y-0 divide-gray-200 border border-gray-200 dark:border-gray-800 ">
+          <thead class="bg-gray-50 dark:bg-gray-800">
+            <tr >
               <th
                 v-for="colField in columnFields"
                 :key="colField.field_code"
@@ -13,7 +13,7 @@
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-white divide-y dark:divide-y-0 divide-gray-200 dark:bg-gray-800 dark:divide-gray-800">
             <tr v-for="(row, rowIndex) in tableRows" :key="rowIndex">
               <td
                 v-for="colField in columnFields"

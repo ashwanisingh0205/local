@@ -25,6 +25,24 @@
         <UButton 
             type="submit" 
             label="Submit form"
+            :loading="loading"
+            :disabled="loading"
+        />
+      </div>
+      
+      <!-- Success/Error Messages -->
+      <div v-if="submitMessage" class="mt-4">
+        <UAlert
+          v-if="submitSuccess"
+          color="green"
+          variant="soft"
+          :title="submitMessage"
+        />
+        <UAlert
+          v-else
+          color="red"
+          variant="soft"
+          :title="submitMessage"
         />
       </div>
     </UForm>
@@ -32,6 +50,7 @@
 </template>
 
 <script setup>
+import axios from 'axios'
 import Wrapper from '~/components/emr/Wrapper.vue'
 import { useFormData } from '~/composables/useFormData'
 
@@ -43,7 +62,7 @@ const props = defineProps({
   form: { type: Object, default: null },
   formType: { type: String, default: null }
 })
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['submit', 'close'])
 
 const { loadFormData, loading: loadingForm } = useFormData()
 
@@ -52,6 +71,8 @@ const formData = ref({})
 const loading = ref(false)
 const validationErrors = ref({})
 const internalFormConfig = ref(null)
+const submitMessage = ref('')
+const submitSuccess = ref(false)
 
 /* ------------------- Helpers ------------------- */
 const getDefaultValue = (field) => {
@@ -84,114 +105,350 @@ const initForm = () => {
 }
 
 /* ------------------- Submit ------------------- */
-const handleSubmit = () => {
-  emit('submit', { ...formData.value })
-  loading.value = false
+const handleSubmit = async () => {
+  loading.value = true
+  submitMessage.value = ''
+  submitSuccess.value = false
+  validationErrors.value = {}
+
+  try {
+    // Prepare form data for submission - transform to match API format
+    const rawData = { ...formData.value }
+    
+    // Define numeric fields that should be converted to numbers
+    const numericFields = new Set([
+      'corporate_id', 'unit_id', 'category_id', 'template_id', 
+      'header_id', 'footer_id', 'css_id', 'pdf_id', 'letterhead_id',
+      'whatsapp_template_id', 'sms_template_id', 'email_template_id'
+    ])
+    
+    // Define boolean fields
+    const booleanFields = new Set(['status_pdf', 'status_universal', 'status'])
+    
+    // Transform the payload with proper data types
+    const payload = {}
+    
+    Object.keys(rawData).forEach(key => {
+      const value = rawData[key]
+      
+      // Skip null/undefined
+      if (value === null || value === undefined) {
+        if (numericFields.has(key)) {
+          payload[key] = 0
+        } else if (booleanFields.has(key)) {
+          payload[key] = false
+        }
+        return
+      }
+      
+      // Convert numeric fields to numbers
+      if (numericFields.has(key)) {
+        const numValue = Number(value)
+        payload[key] = Number.isNaN(numValue) ? 0 : numValue
+      }
+      // Convert boolean fields
+      else if (booleanFields.has(key)) {
+        payload[key] = Boolean(value)
+      }
+      // Keep string fields as is
+      else {
+        payload[key] = value
+      }
+    })
+    
+    // Ensure status is true by default
+    if (payload.status === undefined) {
+      payload.status = true
+    }
+
+    // Validate required fields before submission
+    const requiredFields = {
+      corporate_id: 'Corporate ID',
+      unit_id: 'Unit ID',
+      category_id: 'Category ID',
+      form_code: 'Form Code',
+      form_name: 'Form Name'
+    }
+    
+    const missingFields = []
+    Object.keys(requiredFields).forEach(field => {
+      const value = payload[field]
+      // Check if field is missing, empty, or zero (for numeric fields)
+      if (value === undefined || value === null || value === '' || 
+          (typeof value === 'number' && value === 0 && field !== 'status')) {
+        missingFields.push(requiredFields[field])
+      }
+    })
+    
+    if (missingFields.length > 0) {
+      submitMessage.value = `Please fill in the required fields: ${missingFields.join(', ')}`
+      submitSuccess.value = false
+      loading.value = false
+      return
+    }
+
+    console.log('payload', payload)
+    
+    // POST to API endpoint
+    const response = await axios.post(
+      'http://13.200.174.164:3001/v1/masters/forms/form',
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
+    // Handle successful response
+    if (response.data) {
+      submitSuccess.value = true
+      submitMessage.value = response.data.message || 'Form submitted successfully!'
+      
+      // Emit submit event with response data
+      emit('submit', { 
+        data: formData.value,
+        response: response.data 
+      })
+
+      console.log('formData', formData.value)
+      
+      // Clear form after successful submission (optional)
+      // formData.value = {}
+      
+      // Close the modal quickly after successful submission
+      setTimeout(() => {
+        emit('close')
+      }, 500)
+    }
+  } catch (err) {
+    submitSuccess.value = false
+    
+    // Log full error for debugging
+    console.error('Submit error:', err)
+    console.error('Error response:', err.response?.data)
+    console.error('Error status:', err.response?.status)
+    
+    // Handle validation errors
+    if (err.response?.status === 422 && err.response?.data?.errors) {
+      validationErrors.value = err.response.data.errors
+      submitMessage.value = 'Please fix the validation errors'
+    } 
+    // Handle server errors (500, etc.)
+    else if (err.response?.status >= 500) {
+      const errorData = err.response?.data
+      let errorMsg = 'Server error occurred'
+      
+      if (errorData?.message) {
+        // Format the error message to be more readable
+        errorMsg = errorData.message
+          .replaceAll('corporate_id: corporate_id required', 'Corporate ID is required')
+          .replaceAll('unit_id: unit_id required', 'Unit ID is required')
+          .replaceAll('category_id: category_id required', 'Category ID is required')
+          .replaceAll('form_code: form_code required', 'Form Code is required')
+          .replaceAll('form_name: form_name required', 'Form Name is required')
+      } else if (errorData?.error) {
+        errorMsg = errorData.error
+      }
+      
+      submitMessage.value = `Error: ${errorMsg}`
+      console.error('Server error details:', errorData)
+    }
+    // Handle other errors
+    else {
+      submitMessage.value = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to submit form. Please try again.'
+    }
+    
+    // Emit submit event with error
+    emit('submit', { 
+      data: formData.value,
+      error: err.response?.data || err.message 
+    })
+  } finally {
+    loading.value = false
+  }
 }
 
 /* ------------------- Form Edit Configuration ------------------- */
 const getFormEditConfig = () => {
   return {
     fields: [
-      { 
-        id: 'formTitle', 
-        label: 'Form Type', 
-        type: 'select',
-        required: true,
-        placeholder: 'Enter Form Type',
-        options: [
-          'FORM',
-          'SURVEY',
-          'WORKFLOW'
-          
-        ],
-      },
-      { 
-        id: 'formCode', 
-        label: 'Form Code', 
-        type: 'text',
-        required: true,
-        placeholder: 'Enter form code'
-      },
-      {
-        id: 'template',
-        label: 'Template',
-        type: 'select',
-        options: [
-          'PRESCRIPTION',
-          'DS'
-          
-        ],
-        placeholder: 'Select template'
-      },
-      {
-        id: 'email template',
-        label: 'Email Template',
-        type: 'select',
-        options: [
-          'REGISTRATION',
-        ],
-        placeholder: 'Select CSS'
-      },
-      {
-        id: 'header',
-        label: 'Header',
-        type: 'select',
-        options: [
-          'IPD',
-          'OPD',
-          'STAFF'
-          
-        ],
-        placeholder: 'Select header'
-      },
-      {
-        id: 'footer',
-        label: 'Footer',
-        type: 'select',
-        options: [
-          'LAB'
-         
-        ],
-        placeholder: 'Select footer'
-      },
-      {
-        id: 'WHATSAPP TEMPLATE',
-        label: 'Whatsapp Template',
-        type: 'select',
-        options: [
-          'PAYMENT',
-          'NEW SERVICE'
-         
-        ],
-        placeholder: 'Select letterhead'
-      },
-      {
-        id: 'SMS TEMPLATE',
-        label: 'Sms Template',
-        type: 'select',
-        options: [
-          'PAYMENT',
-         
-        ],
-        placeholder: 'Select document type'
-      },
-      {
-        id:'Button Theme',
-        label: 'Button Theme',
-        type: 'select',
-        options: [
-          'PRIMARY',
-          'SECONDARY',
-          'SUCCESS',
-          'DANGER',
-          'WARNING',
-          'INFO',
-         
-        ],
-        placeholder: 'Select button theme'
-      }
+  {
+    id: 'corporate_id',
+    label: 'Corporate',
+    type: 'select',
+    required: true,
+    placeholder: 'Select corporate',
+    options: [
+      1,2,3,4
+      
+    ] // populate from API
+  },
+  {
+    id: 'unit_id',
+    label: 'Unit',
+    type: 'select',
+    required: true,
+    placeholder: 'Select unit',
+    options: [
+       1,2,3,4
+    ] // populate from API
+  },
+  {
+    id: 'category_id',
+    label: 'Category',
+    type: 'select',
+    required: true,
+    placeholder: 'Select category',
+    options: [ 1,2,3,4] // populate from API
+  },
+  {
+    id: 'form_type',
+    label: 'Form Type',
+    type: 'select',
+    required: true,
+    placeholder: 'Select form type',
+    options: [
+      'FORM',
+      
     ]
+  },
+  {
+    id: 'form_code',
+    label: 'Form Code',
+    type: 'text',
+    required: true,
+    placeholder: 'Enter form code'
+  },
+  {
+    id: 'form_name',
+    label: 'Form Name',
+    type: 'text',
+    required: true,
+    placeholder: 'Enter form name'
+  },
+  {
+    id: 'button_theme',
+    label: 'Button Theme',
+    type: 'select',
+    placeholder: 'Select button theme',
+    options: [
+      'PRIMARY',
+      'SECONDARY',
+      'SUCCESS',
+      'DANGER',
+      'WARNING',
+      'INFO'
+    ]
+  },
+  {
+    id: 'template_id',
+    label: 'Template',
+    type: 'select',
+    placeholder: 'Select template',
+    options: [] // template master
+  },
+  {
+    id: 'header_id',
+    label: 'Header',
+    type: 'select',
+    placeholder: 'Select header',
+    options: [] // header master
+  },
+  {
+    id: 'footer_id',
+    label: 'Footer',
+    type: 'select',
+    placeholder: 'Select footer',
+    options: [] // footer master
+  },
+  {
+    id: 'css_id',
+    label: 'CSS',
+    type: 'select',
+    placeholder: 'Select CSS',
+    options: [] // css master
+  },
+  {
+    id: 'letterhead_id',
+    label: 'Letterhead',
+    type: 'select',
+    placeholder: 'Select letterhead',
+    options: [] // letterhead master
+  },
+  {
+    id: 'whatsapp_template_id',
+    label: 'Whatsapp Template',
+    type: 'select',
+    placeholder: 'Select whatsapp template',
+    options: [] // whatsapp template master
+  },
+  {
+    id: 'sms_template_id',
+    label: 'SMS Template',
+    type: 'select',
+    placeholder: 'Select SMS template',
+    options: [] // sms template master
+  },
+  {
+    id: 'email_template_id',
+    label: 'Email Template',
+    type: 'select',
+    placeholder: 'Select email template',
+    options: [] // email template master
+  },
+  {
+    id: 'save_endpoint',
+    label: 'Save Endpoint',
+    type: 'text',
+    placeholder: 'Enter API endpoint URL'
+  },
+  {
+    id: 'workflow_ids',
+    label: 'Workflow IDs',
+    type: 'select',
+    placeholder: 'Enter workflow IDs (JSON)',
+    options: [
+      1,2,3,4
+    ]
+  },
+  {
+    id: 'frequency',
+    label: 'Frequency',
+    type: 'select',
+    placeholder: 'Enter frequency JSON',
+    options: [
+      'DAILY',
+      'WEEKLY',
+      'MONTHLY',
+      'YEARLY'
+    ]
+  },
+  {
+    id: 'icon',
+    label: 'Icon',
+    type: 'select',
+    placeholder: 'Enter icon class or URL',
+    options: [
+      'lucide:file',
+      'lucide:file-signal',
+      'lucide:archive-x' ,
+      'lucide:annoyed' 
+      ]
+
+  },
+  {
+    id: 'status_pdf',
+    label: 'Enable PDF',
+    type: 'checkbox'
+  },
+  {
+    id: 'status_universal',
+    label: 'Universal Status',
+    type: 'checkbox'
+  }
+]
+
   }
 }
 
