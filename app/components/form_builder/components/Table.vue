@@ -71,7 +71,7 @@
     return {
       ...colField,
       value: cellValue,
-     
+      label: '', 
     }
   }
   </script>

@@ -1,5 +1,3 @@
-
-
 <template>
   <div class="container mt-4">
     <h1 class="text-2xl font-bold mb-6">HR Forms</h1>
@@ -34,9 +32,9 @@
         <h2 class="text-xl font-bold">{{ selectedForm.form_name }}</h2>
       </div>
       
-      <UForm v-if="formConfig">
+      <form v-if="formConfig">
         <FormRenderer :fields="formConfig.fields" />
-      </UForm>
+      </form>
     </div>
 
     <div v-if="loading" class="mt-4">Loading...</div>
@@ -96,28 +94,10 @@ const selectForm = async (form) => {
   selectedForm.value = form;
   loading.value = true;
   error.value = null;
-  
-  if (!form.save_endpoint) {
-    error.value = 'Save endpoint not available for this form';
-    loading.value = false;
-    return;
-  }
-
   try {
-    // Build full URL from save_endpoint
-    const baseUrl = 'http://13.200.174.164:3001';
-    const saveEndpoint = form.save_endpoint;
-    let fullUrl = saveEndpoint.startsWith('/') 
-      ? `${baseUrl}${saveEndpoint}` 
-      : `${baseUrl}/${saveEndpoint}`;
-    
-   
-    
-    // Fetch form data from save_endpoint (GET request)
-    const response = await axios.get(fullUrl);
-
-    console.log('response', response);
-    
+    const response = await axios.get('http://13.200.174.164:3001/v1/hrm/form_department', {
+      params: { form_code: form.form_code }
+    });
     const data = response.data;
     if (data.success && data.form && data.fields) {
       formConfig.value = {

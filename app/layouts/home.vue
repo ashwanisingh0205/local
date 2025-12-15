@@ -315,6 +315,7 @@ const navSections = {
         {name: 'Statistics', path: '/statistics', icon: 'lucide:pie-chart' },
         {name:'Patient', path: '/patient', icon: 'lucide:user' },
         {name:'Table',path:'/table', icon:'lucide:table' },
+        {name:'Hr',path:'/hr', icon:'lucide:users'}
     ],
     projects: [
         { name: 'All Projects', path: '/registration', icon: 'lucide:folder-open' },
