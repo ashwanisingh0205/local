@@ -1,8 +1,8 @@
 <template>
-  <div class="flex gap-4">
+  <div class="flex gap-2 h-[calc(103vh-8rem)]">
     <!-- Form List Column (Left) -->
-    <div class="w-1/3 min-w-0 flex flex-col">
-      <UCard>
+    <div class="w-1/3 min-w-0 flex flex-col h-full">
+      <UCard class="h-full flex flex-col">
         <template #header>
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold">Form List</h2>
@@ -19,38 +19,40 @@
               v-model="searchQuery"
               placeholder="Search forms..."
               icon="i-lucide:search"
-              clearable
+              class="w-full"
               @input="handleSearch"
             />
           </div>
         </template>
 
         <template #default>
-          <div v-if="loading" class="p-4 text-center text-gray-500">
-            Loading forms...
-          </div>
-          <div v-else-if="error" class="p-4 text-center text-red-500">
-            {{ error }}
-          </div>
-          <div v-else-if="filteredForms.length === 0" class="p-4 text-center text-gray-500">
-            No forms found
-          </div>
-          <div v-else class="p-4 space-y-4">
-            <FormCard
-              v-for="form in filteredForms"
-              :key="form.id"
-              :form="form"
-              :is-selected="selectedForm?.id === form.id"
-              @view="handleFormView"
-              @edit="handleFormEdit"
-            />
+          <div class="overflow-y-auto h-full" style="max-height: calc(110vh - 20rem);">
+            <div v-if="loading" class="p-4 text-center text-gray-500">
+              Loading forms...
+            </div>
+            <div v-else-if="error" class="p-4 text-center text-red-500">
+              {{ error }}
+            </div>
+            <div v-else-if="filteredForms.length === 0" class="p-4 text-center text-gray-500">
+              No forms found
+            </div>
+            <div v-else class="p-4 space-y-4">
+              <FormCard
+                v-for="form in filteredForms"
+                :key="form.id"
+                :form="form"
+                :is-selected="selectedForm?.id === form.id"
+                @view="handleFormView"
+                @edit="handleFormEdit"
+              />
+            </div>
           </div>
         </template>
       </UCard>
     </div>
 
     <!-- Form Fields Column (Right) -->
-    <div class="flex-1 min-w-0 flex flex-col">
+    <div class="flex-1 min-w-0 flex flex-col h-full">
       <NuxtPage />
     </div>
   </div>
@@ -150,8 +152,7 @@ const handleFormEdit = (form) => {
 };
 
 const handleNewForm = () => {
-  // Don't unselect the current form, just open the modal for creating a new form
-  // Set formForModal to null to indicate it's a new form (not editing existing)
+
   formForModal.value = null;
   isModalOpen.value = true;
 };

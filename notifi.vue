@@ -11,7 +11,7 @@
           </h2>
           <UButton
             v-if="selectedForm"
-            @click="handleNewFormField"
+            @click="isFieldModalOpen = true"
             icon="i-lucide:plus"
             label="New"
             color="info"
@@ -28,14 +28,12 @@
           <UIcon name="lucide:alert-circle" class="w-8 h-8 mx-auto mb-2" />
           <p>{{ error }}</p>
         </div>
-        <div v-else-if="selectedForm && formConfig && formConfig.fields && formConfig.fields.length > 0" class="p-4">
-          <!-- Debug info - temporarily enabled to help debug -->
-          
+        <div v-else-if="formConfig?.fields?.length" class="p-4">
           <UForm>
             <FormRenderer :fields="formConfig.fields" />
           </UForm>
         </div>
-        <div v-else-if="selectedForm && !loading && (!formConfig || !formConfig.fields || formConfig.fields.length === 0)" class="p-8 text-center">
+        <div v-else-if="selectedForm" class="p-8 text-center">
           <UIcon name="lucide:file-text" class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
           <p class="text-gray-600 dark:text-gray-400 mb-2">No form fields found</p>
           <p class="text-sm text-gray-500 dark:text-gray-500">Click "New" to add a form field</p>
@@ -48,43 +46,43 @@
       </template>
     </UCard>
   </div>
+
+  <FormFieldEditModal
+    v-model:open="isFieldModalOpen"
+    :form="selectedForm"
+    @submit="handleFieldSubmit"
+  />
 </template>
 
 <script setup>
 import axios from 'axios';
 import FormRenderer from '../../../../components/form_builder/FormRenderer.vue';
+import FormFieldEditModal from '../../../../components/FormFieldEditModal.vue';
 
 definePageMeta({ layout: 'home' });
 
 const route = useRoute();
-const SelectedForm = inject('selectedForm', null);
+const selectedForm = inject('selectedForm', ref(null));
 const forms = inject('forms', ref([]));
 
 const formConfig = ref(null);
 const loading = ref(false);
 const error = ref(null);
+const isFieldModalOpen = ref(false);
 
-const selectedForm = computed(() => SelectedForm?.value || null);
-
-// Apply width calculation to fields
 const applyWidthCalculation = (fields) => {
   fields.forEach(f => {
-    let labelWidth = f.label_width;
-    if (typeof labelWidth === "string" && labelWidth.includes('%')) {
-      labelWidth = Number.parseInt(labelWidth.replace('%', ''), 10);
-    }
-    if (!labelWidth || labelWidth === 0) {
-      labelWidth = 30;
-    }
-    f.value_width = 100 - labelWidth;
+    let labelWidth = typeof f.label_width === "string" && f.label_width.includes('%')
+      ? parseInt(f.label_width.replace('%', ''), 10)
+      : f.label_width || 30;
+    
     f.label_width = labelWidth;
-    if (Array.isArray(f.fields)) {
-      applyWidthCalculation(f.fields);
-    }
+    f.value_width = 100 - labelWidth;
+    
+    if (Array.isArray(f.fields)) applyWidthCalculation(f.fields);
   });
 };
 
-// Fetch form fields from API
 const loadFormFields = async (formCode) => {
   if (!formCode) {
     formConfig.value = null;
@@ -95,8 +93,7 @@ const loadFormFields = async (formCode) => {
   error.value = null;
   
   try {
-    const response = await axios.get(`http://13.200.174.164:3001/v1/form/formdata?form_code=${formCode}`);
-    const data = response.data;
+    const { data } = await axios.get(`http://13.200.174.164:3001/v1/form/formdata?form_code=${formCode}`);
     
     if (data.success && data.form && Array.isArray(data.fields)) {
       formConfig.value = {
@@ -117,24 +114,31 @@ const loadFormFields = async (formCode) => {
   }
 };
 
-const handleNewFormField = () => {
-  // Handle new form field
-};
-
-const handleFormFieldEdit = (field) => {
-  // Handle edit form field
-};
-
-// Load form fields on mount
-onMounted(() => {
+const handleFieldSubmit = async () => {
   if (selectedForm.value?.form_code) {
-    loadFormFields(selectedForm.value.form_code);
-  } else if (route.query.id) {
-    const form = forms.value.find(f => f.id === Number.parseInt(route.query.id, 10));
-    if (form?.form_code) {
-      loadFormFields(form.form_code);
-    }
+    await loadFormFields(selectedForm.value.form_code);
+  }
+};
+
+// Computed to trigger load on form or route change
+const formIdentifier = computed(() => {
+  if (selectedForm.value?.form_code) return selectedForm.value.form_code;
+  
+  const formId = route.query.id;
+  if (formId && forms.value.length) {
+    const form = forms.value.find(f => f.id === parseInt(formId, 10));
+    return form?.form_code;
+  }
+  
+  return null;
+});
+
+// Single effect to handle all loading scenarios
+watchEffect(() => {
+  if (formIdentifier.value) {
+    loadFormFields(formIdentifier.value);
+  } else {
+    formConfig.value = null;
   }
 });
 </script>
-
